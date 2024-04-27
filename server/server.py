@@ -8,8 +8,8 @@ from model.device import Device
 from model.mesh import Mesh
 
 class AppServer(Flask):
-    def __init__(self, name):
-        super.__init__(name)
+    def __init__(self, import_name: str):
+        super().__init__(import_name)
         self.hardware = Hardware()
         self.own_ip: str = None
         self.mesh: Mesh = None

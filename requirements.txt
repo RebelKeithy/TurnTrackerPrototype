@@ -1,0 +1,4 @@
+flask == 3.0.3
+pydantic == 2.7.1
+requests == 2.31.0
+gpiozero == 2.0.1

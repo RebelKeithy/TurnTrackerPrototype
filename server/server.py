@@ -7,15 +7,17 @@ from hardware.hardware import Hardware
 from model.device import Device
 from model.mesh import Mesh
 
+
 class AppServer(Flask):
-    def __init__(self, import_name: str):
+    def __init__(self, import_name: str, hardware: Hardware):
         super().__init__(import_name)
-        self.hardware = Hardware()
+        self.hardware = hardware
         self.own_ip: str = None
         self.mesh: Mesh = None
 
-def start_server():
-    app = AppServer('TurnTrackerServer')
+
+def start_server(hardware: Hardware):
+    app = AppServer('TurnTrackerServer', hardware)
 
     @app.route('/')
     def root():

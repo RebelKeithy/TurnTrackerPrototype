@@ -15,13 +15,14 @@ def main():
     parser.add_argument("server_ip", help="Enter the server IP")
     args = parser.parse_args()
 
-    hardware = Hardware(args.server_ip)
     own_ip = get_ip()
     print(f"http://{args.server_ip}:8000/join")
     response = requests.post(f"http://{args.server_ip}:8000/join")
     response.raise_for_status()
     data = response.json()['data']
     mesh = Mesh.model_validate_json(data)
+    hardware = Hardware(args.server_ip)
+    hardware.device = mesh.get_by_ip(own_ip)
     app = server.start_server(hardware, own_ip, mesh)
     app.run(host='0.0.0.0', port=8000, debug=EMULATE_HARDWARE)
 

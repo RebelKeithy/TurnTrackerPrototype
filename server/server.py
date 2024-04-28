@@ -33,6 +33,7 @@ def start_server(hardware: Hardware, own_ip: str, mesh: Optional[Mesh] = None):
 
     @app.route('/join', methods=['POST'])
     def join():
+        print("/join")
         if app.mesh.get_by_ip(request.remote_addr) is None:
             app.mesh.devices.append(
                 Device(
@@ -41,6 +42,7 @@ def start_server(hardware: Hardware, own_ip: str, mesh: Optional[Mesh] = None):
                 )
             )
             update_clients()
+        print(f'{app.mesh=}')
         return {
             'data': app.mesh.model_dump_json()
         }
@@ -68,7 +70,9 @@ def start_server(hardware: Hardware, own_ip: str, mesh: Optional[Mesh] = None):
             if not next_device.passed:
                 next_device.on = True
                 next_device_updated = True
+        print(f'{app.mesh=}')
         update_clients()
+        return 'Success', 200
 
     @app.route('/increment_turn_order', methods=['POST'])
     def increment_turn_order():
@@ -76,7 +80,9 @@ def start_server(hardware: Hardware, own_ip: str, mesh: Optional[Mesh] = None):
         next_device = app.mesh.get_by_turn((device.turn_order + 1) % len(app.mesh.devices))
         (device.turn_order, next_device.turn_order) = (next_device.turn_order, next_device.turn_order)
         (device.on, next_device.on) = (next_device.on, next_device.on)
+        print(f'{app.mesh=}')
         update_clients()
+        return 'Success', 200
 
     @app.route('/decrement_turn_order', methods=['POST'])
     def decrement_turn_order():
@@ -84,7 +90,9 @@ def start_server(hardware: Hardware, own_ip: str, mesh: Optional[Mesh] = None):
         next_device = app.mesh.get_by_turn((device.turn_order - 1) % len(app.mesh.devices))
         (device.turn_order, next_device.turn_order) = (next_device.turn_order, next_device.turn_order)
         (device.on, next_device.on) = (next_device.on, next_device.on)
+        print(f'{app.mesh=}')
         update_clients()
+        return 'Success', 200
 
     @app.route('/pass', methods=['POST'])
     def pass_turn():
@@ -106,7 +114,9 @@ def start_server(hardware: Hardware, own_ip: str, mesh: Optional[Mesh] = None):
             if not next_device.passed:
                 next_device.on = True
                 next_device_updated = True
+        print(f'{app.mesh=}')
         update_clients()
+        return 'Success', 200
 
     @app.route('/mesh', methods=['POST'])
     def set_mesh():
@@ -114,15 +124,16 @@ def start_server(hardware: Hardware, own_ip: str, mesh: Optional[Mesh] = None):
             app.own_ip = request.host.split(':')[0]
         app.mesh = Mesh.model_validate_json(request.data.decode())
         if app.hardware:
-            app.hardware.set_hardware_state(mesh.get_by_ip(app.own_ip))
+            app.hardware.set_hardware_state(app.mesh.get_by_ip(app.own_ip))
         print('Mesh Updated')
-        print(f'{mesh=}')
+        print(f'{app.mesh=}')
+        return 'Success', 200
 
     def update_clients(excluded_ip=[]):
         if app.hardware:
             app.hardware.set_hardware_state(app.mesh.get_by_ip(app.own_ip))
         for device in app.mesh.devices:
-            if device.ip != request.remote_addr and device.ip not in excluded_ip:
+            if device.ip != request.remote_addr and device.ip not in excluded_ip and device.ip != own_ip:
                 requests.post(f'http://{device.ip}:8000/mesh', data=app.mesh.model_dump_json())
 
     return app

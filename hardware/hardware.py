@@ -10,7 +10,7 @@ class Hardware:
         if not REMOTE_SERVER:
             self.led_turn = LED(17)
             self.button_end_turn = Button(2)
-        self.button_end_turn.when_pressed = self.next_turn
+            self.button_end_turn.when_pressed = self.next_turn
         self.server_ip = server_ip
 
     def set_server_ip(self, server_ip):

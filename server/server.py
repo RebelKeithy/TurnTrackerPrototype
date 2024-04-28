@@ -1,4 +1,3 @@
-import json
 from typing import Optional
 
 import requests
@@ -7,7 +6,6 @@ from flask import Flask, request
 from hardware.hardware import Hardware
 from model.device import Device
 from model.mesh import Mesh
-from utils.network import get_ip
 
 
 class AppServer(Flask):
@@ -35,7 +33,7 @@ def start_server(hardware: Hardware, own_ip: str, mesh: Optional[Mesh] = None):
 
     @app.route('/join', methods=['POST'])
     def join():
-        if mesh.get_by_ip(request.remote_addr) is None:
+        if app.mesh.get_by_ip(request.remote_addr) is None:
             app.mesh.devices.append(
                 Device(
                     ip = request.remote_addr,
@@ -114,18 +112,18 @@ def start_server(hardware: Hardware, own_ip: str, mesh: Optional[Mesh] = None):
     def set_mesh():
         if app.own_ip is None:
             app.own_ip = request.host.split(':')[0]
-        mesh = Mesh.model_validate_json(request.data.decode())
+        app.mesh = Mesh.model_validate_json(request.data.decode())
         if app.hardware:
             app.hardware.set_hardware_state(mesh.get_by_ip(app.own_ip))
         print('Mesh Updated')
         print(f'{mesh=}')
 
-    def update_clients():
+    def update_clients(excluded_ip=[]):
         if app.hardware:
             app.hardware.set_hardware_state(app.mesh.get_by_ip(app.own_ip))
         for device in app.mesh.devices:
-            if device.ip != request.remote_addr:
-                requests.post(f'http://{device.ip}/mesh', data=app.mesh.model_dump_json())
+            if device.ip != request.remote_addr and device.ip not in excluded_ip:
+                requests.post(f'http://{device.ip}:8000/mesh', data=app.mesh.model_dump_json())
 
     return app
 

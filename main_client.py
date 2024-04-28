@@ -3,7 +3,7 @@ import requests
 
 from hardware.hardware import Hardware
 from model.mesh import Mesh
-from resources.constants import REMOTE_SERVER
+from resources.constants import EMULATE_HARDWARE
 from server import server
 
 from utils.network import get_ip
@@ -23,7 +23,7 @@ def main():
     data = response.json()['data']
     mesh = Mesh.model_validate_json(data)
     app = server.start_server(hardware, own_ip, mesh)
-    app.run(host='0.0.0.0', port=8000, debug=REMOTE_SERVER)
+    app.run(host='0.0.0.0', port=8000, debug=EMULATE_HARDWARE)
 
 
 if __name__ == '__main__':

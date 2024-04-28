@@ -1,8 +1,11 @@
 import argparse
 import requests
-from threading import Thread
+
+from hardware.hardware import Hardware
 from server import server
-import time
+
+from utils.network import get_ip
+
 
 def main():
     # get server ip from args
@@ -10,14 +13,12 @@ def main():
     parser.add_argument("server_ip", help="Enter the server IP")
     args = parser.parse_args()
 
-    app = server.start_server()
-    thread = Thread(target=app.run, kwargs={'host': '0.0.0.0', 'port': 8000, 'debug': True})
-    thread.start()
-    time.sleep(1)
-
+    hardware = Hardware(args.server_ip)
+    own_ip = get_ip()
+    print(f"http://{args.server_ip}:8000/join")
     requests.post(f"http://{args.server_ip}:8000/join")
-
-    thread.join()
+    app = server.start_server(hardware, own_ip)
+    app.run(host='0.0.0.0', port=8000, debug=True)
 
 
 if __name__ == '__main__':

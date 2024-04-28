@@ -6,18 +6,26 @@ from flask import Flask, request
 from hardware.hardware import Hardware
 from model.device import Device
 from model.mesh import Mesh
+from utils.network import get_ip
 
 
 class AppServer(Flask):
-    def __init__(self, import_name: str, hardware: Hardware):
+    def __init__(self, import_name: str, hardware: Hardware, own_ip: str) -> None:
         super().__init__(import_name)
         self.hardware = hardware
-        self.own_ip: str = None
-        self.mesh: Mesh = None
+        self.own_ip: str = own_ip
+        self.mesh: Mesh = Mesh(
+            devices=[
+                Device(
+                    ip=own_ip,
+                    on=True,
+                )
+            ]
+        )
 
 
-def start_server(hardware: Hardware):
-    app = AppServer('TurnTrackerServer', hardware)
+def start_server(hardware: Hardware, own_ip: str):
+    app = AppServer('TurnTrackerServer', hardware, own_ip)
 
     @app.route('/')
     def root():
@@ -26,16 +34,6 @@ def start_server(hardware: Hardware):
 
     @app.route('/join', methods=['POST'])
     def join():
-        if app.mesh is None:
-            app.own_ip = request.host.split(':')[0]
-            app.mesh = Mesh(
-                devices=[
-                    Device(
-                        ip = app.own_ip,
-                        on = True,
-                    )
-                ]
-            )
         app.mesh.devices.append(
             Device(
                 ip = request.remote_addr,
@@ -43,6 +41,9 @@ def start_server(hardware: Hardware):
             )
         )
         update_clients()
+        return {
+            'data': app.mesh.model_dump_json()
+        }
 
     @app.route('/end_turn', methods=['POST'])
     def end_turn():
@@ -112,12 +113,14 @@ def start_server(hardware: Hardware):
         if app.own_ip is None:
             app.own_ip = request.host.split(':')[0]
         mesh = Mesh.model_validate_json(request.data.decode())
-        app.hardware.set_hardware_state(mesh.get_by_ip(app.own_ip))
+        if app.hardware:
+            app.hardware.set_hardware_state(mesh.get_by_ip(app.own_ip))
         print('Mesh Updated')
         print(f'{mesh=}')
 
     def update_clients():
-        app.hardware.set_hardware_state(app.mesh.get_by_ip(app.own_ip))
+        if app.hardware:
+            app.hardware.set_hardware_state(app.mesh.get_by_ip(app.own_ip))
         for device in app.mesh.devices:
             if device.ip != request.remote_addr:
                 requests.post(f'http://{device.ip}/mesh', data=app.mesh.model_dump_json())

@@ -1,4 +1,5 @@
 import json
+from typing import Optional
 
 import requests
 from flask import Flask, request
@@ -10,11 +11,11 @@ from utils.network import get_ip
 
 
 class AppServer(Flask):
-    def __init__(self, import_name: str, hardware: Hardware, own_ip: str) -> None:
+    def __init__(self, import_name: str, hardware: Hardware, own_ip: str, mesh: Optional[Mesh]) -> None:
         super().__init__(import_name)
         self.hardware = hardware
         self.own_ip: str = own_ip
-        self.mesh: Mesh = Mesh(
+        self.mesh: Mesh = mesh or Mesh(
             devices=[
                 Device(
                     ip=own_ip,
@@ -24,8 +25,8 @@ class AppServer(Flask):
         )
 
 
-def start_server(hardware: Hardware, own_ip: str):
-    app = AppServer('TurnTrackerServer', hardware, own_ip)
+def start_server(hardware: Hardware, own_ip: str, mesh: Optional[Mesh] = None):
+    app = AppServer('TurnTrackerServer', hardware, own_ip, mesh)
 
     @app.route('/')
     def root():
@@ -34,13 +35,14 @@ def start_server(hardware: Hardware, own_ip: str):
 
     @app.route('/join', methods=['POST'])
     def join():
-        app.mesh.devices.append(
-            Device(
-                ip = request.remote_addr,
-                turn_order=len(app.mesh.devices)
+        if mesh.get_by_ip(request.remote_addr) is None:
+            app.mesh.devices.append(
+                Device(
+                    ip = request.remote_addr,
+                    turn_order=len(app.mesh.devices)
+                )
             )
-        )
-        update_clients()
+            update_clients()
         return {
             'data': app.mesh.model_dump_json()
         }

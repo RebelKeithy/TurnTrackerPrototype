@@ -22,7 +22,7 @@ class Hardware:
             if not EMULATE_HARDWARE:
                 self.led_turn.off()
             if self.server_ip:
-                requests.post(f'http://{self.server_ip}:8000/turn')
+                requests.post(f'http://{self.server_ip}:8000/end_turn')
 
     def set_hardware_state(self, in_device: Device):
         self.device = in_device

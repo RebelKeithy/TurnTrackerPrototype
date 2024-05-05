@@ -2,13 +2,11 @@ import socketio
 
 from hardware.hardware import Hardware
 from model.device import Device
-from model.mesh import Mesh
 
-hardware = Hardware(0)
-mesh: Mesh = Mesh(devices=[])
 sio = socketio.Client()
 
 
+hardware = Hardware(0)
 hardware.button_callback(lambda: sio.emit('end_turn'))
 
 

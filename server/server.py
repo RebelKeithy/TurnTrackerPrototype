@@ -38,7 +38,8 @@ def start_server(hardware: Hardware, own_ip: str, mesh: Optional[Mesh] = None):
             app.mesh.devices.append(
                 Device(
                     ip = request.remote_addr,
-                    turn_order=len(app.mesh.devices)
+                    turn_order=len(app.mesh.devices),
+                    on = len(app.mesh.devices) == 0
                 )
             )
             update_clients()

@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Dict
 
 import pydantic
 
@@ -6,15 +6,23 @@ from model.device import Device
 
 
 class Mesh(pydantic.BaseModel):
-    devices: List[Device]
+    devices: Dict[str, Device]
 
-    def get_by_ip(self, ip: str) -> Device:
-        for device in self.devices:
-            if device.ip == ip:
-                return device
+    def add_device(self, id):
+        self.devices[id] = Device(
+            on=len(self.devices) == 0,
+            turn_order=len(self.devices)
+        )
+
+    def remove_device(self, id):
+        del self.devices[id]
+
+
+    def get_by_id(self, id: str) -> Device:
+        return self.devices[id]
 
     def get_by_turn(self, turn: int) -> Device:
-        for device in self.devices:
+        for device in self.devices.values():
             if device.turn_order == turn:
                 return device
 
@@ -33,7 +41,7 @@ class Mesh(pydantic.BaseModel):
                 return device
 
     def end_turn(self):
-        for device in self.devices:
+        for device in self.devices.values():
             if device.on:
                 device.on = False
                 self.get_next_device(device.turn_order, skip_passed=True).on = True
@@ -41,8 +49,8 @@ class Mesh(pydantic.BaseModel):
     def pass_turn(self, turn: int):
         device = self.get_by_turn(turn)
         device.passed = True
-        if all(device.passed for device in self.devices):
-            for device in self.devices:
+        if all(device.passed for device in self.devices.values()):
+            for device in self.devices.values():
                 device.passed = True
                 if device.turn_order == 0:
                     device.on = True

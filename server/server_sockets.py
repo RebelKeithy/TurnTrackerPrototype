@@ -3,13 +3,13 @@ from flask_socketio import SocketIO, emit, send
 
 from model.mesh import Mesh
 
-mesh: Mesh = Mesh(devices=[])
+mesh: Mesh = Mesh(devices={})
 app = Flask('TurnTrackerPrototypeSockets')
 socketio = SocketIO(app)
 
 
 def start():
-    socketio.run(app)
+    socketio.run(app, host='0.0.0.0', port=5000)
 
 
 @socketio.on('connect')

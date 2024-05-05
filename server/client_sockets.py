@@ -21,8 +21,8 @@ def connect():
 
 
 @sio.event
-def connect_error():
-    print('[INFO] Failed to connect to server.')
+def connect_error(message):
+    print(f'[INFO] Failed to connect to server. {message=}')
 
 
 @sio.on('device_update')
